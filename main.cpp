@@ -4,7 +4,7 @@
 #include "cliente.h"
 
 using namespace std;
-
+//este es para windows y para linux
 void limpiarPantalla() {
 #ifdef _WIN32
     system("cls");
