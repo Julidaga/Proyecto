@@ -1,10 +1,12 @@
 #include <iostream>
 #include <string>
+#include <vector>
 #include "empleado.h"
 #include "cliente.h"
 
 using namespace std;
-//este es para windows y para linux
+
+        //Limpia pantalla
 void limpiarPantalla() {
 #ifdef _WIN32
     system("cls");
@@ -13,8 +15,30 @@ void limpiarPantalla() {
 #endif
 }
 
+        //Contraseña
+bool validarContrasena() {
+    string pass;
+    int intentos = 3;
+
+    while (intentos > 0) {
+        cout << "Ingrese contraseña de empleado: ";
+        cin >> pass;
+
+        if (pass == "ABC123") {
+            return true;
+        }
+
+        intentos--;
+        cout << "Contraseña incorrecta. Intentos restantes: " << intentos << "\n\n";
+    }
+
+    return false;
+}
+
 int main() {
-    vector<Auto> autos;
+    vector<Vehiculo> vehiculos;
+    vector<Alquiler> historial;
+
     int opcion;
     string pausa;
 
@@ -43,14 +67,21 @@ int main() {
 
         switch (opcion) {
         case 1:
-            menuEmpleado(autos);
+            if (validarContrasena()) {
+                menuEmpleado(vehiculos, historial);
+            } else {
+                cout << "Acceso denegado.\n";
+            }
             break;
+
         case 2:
-            menuCliente(autos);
+            menuCliente(vehiculos, historial);
             break;
+
         case 3:
             cout << "Saliendo del sistema...\n";
             break;
+
         default:
             cout << "Opcion invalida!\n";
         }
