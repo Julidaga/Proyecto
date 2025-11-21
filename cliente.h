@@ -16,7 +16,7 @@ extern vector<int> cilindrajesMoto;
 struct Vehiculo;
 struct Alquiler;
 
-// Impuestos
+// ==================== IMPUESTOS ====================
 
 double impuestoGama(string gama) {
     if (gama == "Toyota" || gama == "Chevrolet" || gama == "Renault" || gama == "Kia" || gama == "Hyundai")
@@ -33,7 +33,7 @@ double impuestoCilindraje(int c) {
     return 0.12;
 }
 
-                    //Filtro para alquilar el vehiculo 
+// ==================== FILTROS ====================
 
 int elegirTipoVehiculo() {
     int op;
@@ -58,12 +58,10 @@ vector<int> filtrarVehiculos(const vector<Vehiculo>& v, int tipo, int filtro) {
     vector<int> indices;
 
     if (tipo == 1) {
-        // Autos
         for (int i = 0; i < v.size(); i++)
             if (v[i].tipo == "AUTO" && !v[i].alquilado)
                 indices.push_back(i);
     } else {
-        // Motos
         for (int i = 0; i < v.size(); i++)
             if (v[i].tipo == "MOTO" && !v[i].alquilado)
                 indices.push_back(i);
@@ -72,7 +70,6 @@ vector<int> filtrarVehiculos(const vector<Vehiculo>& v, int tipo, int filtro) {
     if (filtro == 1)
         return indices;
 
-    // FILTRAR POR GAMA O CILINDRAJE
     vector<int> filtrados;
     
     if (tipo == 1) {
@@ -105,7 +102,7 @@ vector<int> filtrarVehiculos(const vector<Vehiculo>& v, int tipo, int filtro) {
     return filtrados;
 }
 
-                    //Alquilar vehiculo 
+// ==================== ALQUILAR VEHICULO ====================
 
 void alquilarVehiculo(vector<Vehiculo>& v, vector<Alquiler>& hist) {
     if (v.empty()) {
@@ -154,9 +151,21 @@ void alquilarVehiculo(vector<Vehiculo>& v, vector<Alquiler>& hist) {
     cout << "Nombre completo: ";
     getline(cin, nombre);
 
-    int horas;
-    cout << "Horas de alquiler: ";
-    cin >> horas;
+    // HORAS DECIMALES + VALIDACIÓN
+    double horas;
+    cout << "Horas de alquiler (positivas y en decimales): ";
+
+    while (true) {
+        cin >> horas;
+
+        if (cin.fail() || horas <= 0) {
+            cin.clear();
+            cin.ignore(1000, '\n');
+            cout << "Valor inválido. Ingrese un número positivo: ";
+        } else {
+            break;
+        }
+    }
 
     veh.horasAlquiladas = horas;
 
@@ -164,24 +173,43 @@ void alquilarVehiculo(vector<Vehiculo>& v, vector<Alquiler>& hist) {
                         ? impuestoGama(veh.gama)
                         : impuestoCilindraje(veh.cilindraje);
 
-    int total = horas * veh.precioHora;
+    double total = horas * veh.precioHora;
     total += total * impuesto;
 
     veh.alquilado = true;
 
-                //La fecha 
+    // FECHA
     time_t t = time(nullptr);
     tm* now = localtime(&t);
 
-    Alquiler reg = {nombre, veh.modelo, horas, total,
+    Alquiler reg = {nombre, veh.modelo, (int)horas, (int)total,
                     now->tm_mday, now->tm_mon + 1, now->tm_year + 1900};
 
     hist.push_back(reg);
 
     cout << "\nAlquiler completado. Total: $" << total << "\n";
+
+    // ==================== FACTURA ALQUILER ====================
+    ofstream factura("factura_alquiler.txt");
+
+    factura << "========== FACTURA DE ALQUILER ==========\n";
+    factura << "Cliente: " << nombre << "\n";
+    factura << "Vehículo: " << veh.modelo << "\n";
+    factura << "Horas alquiladas: " << horas << "\n";
+    factura << "Precio/hora: $" << veh.precioHora << "\n";
+    factura << "Impuesto aplicado: " << (impuesto * 100) << "%\n";
+    factura << "TOTAL A PAGAR: $" << total << "\n";
+    factura << "Fecha: " << now->tm_mday << "/" 
+            << now->tm_mon + 1 << "/" 
+            << now->tm_year + 1900 << "\n";
+    factura << "=========================================\n";
+
+    factura.close();
+
+    cout << "Factura generada: factura_alquiler.txt\n";
 }
 
-                //Devolver el Vehiculo
+// ==================== DEVOLVER VEHICULO ====================
 
 void devolverVehiculo(vector<Vehiculo>& v) {
     vector<int> alquilados;
@@ -214,21 +242,41 @@ void devolverVehiculo(vector<Vehiculo>& v) {
 
     Vehiculo& veh = v[alquilados[op]];
 
-    int horas;
+    double horas;
     cout << "¿Cuántas horas se utilizó?: ";
-    cin >> horas;
 
-    if (horas <= 1 || horas > veh.horasAlquiladas) {
-        cout << "Error: La devolución debe ser más de 1 hora y menor a lo alquilado.\n";
-        return;
+    while (true) {
+        cin >> horas;
+
+        if (cin.fail() || horas <= 1 || horas > veh.horasAlquiladas) {
+            cin.clear();
+            cin.ignore(1000, '\n');
+            cout << "Error. Ingrese un valor entre 1 y " << veh.horasAlquiladas << ": ";
+        } else {
+            break;
+        }
     }
 
     veh.alquilado = false;
 
     cout << "\nDevolución registrada correctamente.\n";
+
+    // ==================== FACTURA DEVOLUCIÓN ====================
+    ofstream factura("factura_devolucion.txt");
+
+    factura << "========== FACTURA DE DEVOLUCIÓN ==========\n";
+    factura << "Vehículo devuelto: " << veh.modelo << "\n";
+    factura << "Horas utilizadas: " << horas << "\n";
+    factura << "Horas pagadas originalmente: " << veh.horasAlquiladas << "\n";
+    factura << "Estado: Devuelto correctamente\n";
+    factura << "===========================================\n";
+
+    factura.close();
+
+    cout << "Factura generada: factura_devolucion.txt\n";
 }
 
-                            //Menu
+// ==================== MENU CLIENTE ====================
 
 void menuCliente(vector<Vehiculo>& v, vector<Alquiler>& hist) {
     int op;
